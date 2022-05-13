@@ -1,0 +1,68 @@
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js" ></script>
+        <script src="http://code.jquery.com/jquery-2.0.3.min.js"> </script>
+    </head>
+
+    <body>
+        <div id='map' style="width: 1450px; height: 790;"></div>
+        <script>
+            var map = L.map('map', {
+                minZoom: 1,
+                maxZoom: 18
+            });
+
+            var cartodbAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attribution">CARTO</a>';
+            var positron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+                attribution: cartodbAttribution
+            }).addTo(map);
+
+            map.setZoom(2);
+
+            var lat = -4;
+            var lng = -4;
+
+            function moveISS() {
+                $.getJSON('http://localhost:8080/api/issLocation', function(data) {
+                    lat = data['iss_position']['latitude'];
+                    lng = data['iss_position']['longitude'];
+
+                    console.log('lat = ' + lat);
+                    console.log('lng = ' + lng);
+
+                    setMap(lat, lng);  // set the map to the ISS location
+
+                    drawCircle(lat, lng); // draw a circle around the ISS location
+                }).error(function() {
+                    L.popup()
+                    .setLatLng(L.latLng(lat, lng))
+                    .setContent('<p>Connection error! <br> API unavailable.</p>')
+                    .openOn(map);
+
+                    setMap(lat, lng);  // set the map to the ISS location  
+                });
+
+                setTimeout(moveISS, 5000);
+            }
+
+            function drawCircle(lat, lng) {
+                var circle = L.circle([lat, lng], {
+                        color: 'blue',
+                        fillColor: 'blue',
+                        fillOpacity: 0.5,
+                        radius: 30
+                    }).addTo(map);
+            }
+
+            function setMap(lat, lng) {
+                map.setView([lat, lng], map.getZoom());
+                map.flyTo(L.latLng(lat, lng), map.getZoom());
+            }
+
+            moveISS();
+
+        </script>
+    </body>
+</html>
